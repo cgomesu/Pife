@@ -1,58 +1,62 @@
 import java.util.Scanner;
 
 /**
- * Classe para criar e executar jogos de cartas Rouba Monte.
+ * Classe para criar e executar jogos de cartas Pife.
  * 
  * As regras usadas na implementa&ccedil;&atilde;o s&atilde;o basicamente 
  * 
- * @author Roland Teodorowitsch
- * @version 12 jun. 2019
+ * @author cgomesu
+ * @version 23 jun 2019
  */
-public class RoubaMonte {
+public class Pife {
     
     private Baralho compras;
-    private Baralho mesa;
+    private Baralho lixo;
+    private Baralho[] mesaJogador;
     private Baralho[] maoJogador;
-    private Baralho[] monteJogador;
     private Jogador[] jogadores;
     private int numJogadores;
 
+    //constantes de acordo com regras de Pife
+    private static final int CARTAS_MAO = 9;
+
     /**
-     * Construtor para a classe <code>RoubaMonte</code>.
+     * Construtor para a classe <code>Pife</code>.
      * 
      * Quando se cria um objeto desta classe, este m&eacute;todo inicializa todas as vari&aacute;veis de
      * inst&acirc;ncia necess&aacute;rias.
      * @param jog Vetor de objetos da classe <code>Jogador</code> que jogaram a partida.
      * @throws IllegalArgumentException &Eacute; lan&ccedil;ada quando o n&uacute;mero de jogadores &eacute; inv&aacute;lido.
      */
-    public RoubaMonte(Jogador[] jog) throws IllegalArgumentException {
+    public Pife(Jogador[] jog) throws IllegalArgumentException {
         int nJ = jog.length;
         if (nJ < 2 || nJ > 4)
             throw new IllegalArgumentException("Número inválido de jogadores.");
         jogadores = jog;
-        Carta c;
+        
         numJogadores = nJ;
         compras = new Baralho(false);
-        mesa = new Baralho();
+        lixo = new Baralho();
+        mesaJogador = new Baralho[numJogadores];
         maoJogador = new Baralho[numJogadores];
-        monteJogador = new Baralho[numJogadores];
+        
         compras.embaralha();
+
         for (int i=0;i<numJogadores;++i) {
             maoJogador[i] = new Baralho();
-            monteJogador[i] = new Baralho();
+            mesaJogador[i] = new Baralho();
         }
-        // MESA
-        for (int i=0;i<8;++i) {
-            c = compras.remove();
-            mesa.insere(c);
-        }
-        // CARTAS DOS JOGADORES
-        for (int i=0;i<4;++i) {
+
+        // Distribuicao inicial de cartas na mao de cada jogador
+        Carta c;
+        for (int i=0;i<CARTAS_MAO;++i) {
             for (int j=0;j<numJogadores;++j) {
                 c = compras.remove();
                 maoJogador[j].insere(c);
             }
         }
+        // Restante das cartas ficam no monte de compras
+
     }
 
     /**
@@ -61,122 +65,53 @@ public class RoubaMonte {
      */
     private void mostraMesa(int jogadorDaVez) {
         System.out.println("========================================================================");
+        //Compras
         int numCartasCompras = compras.obtemNumCartas();
         if (numCartasCompras == 0)
             System.out.printf("Compras (0): -\n");
-        else
-            System.out.printf("Compras (%d): [X]\n",compras.obtemNumCartas());
-        System.out.printf("Mesa (%d): %s\n",
-                           mesa.obtemNumCartas(),
-                           mesa.toString() );
+        else 
+            System.out.printf("Compras (%d): %s\n",compras.obtemNumCartas(),
+                                                   compras.topo().toString());
+
+        //Lixo
+        int numCartasLixo = lixo.obtemNumCartas();
+        if (numCartasLixo == 0)
+            System.out.printf("Lixo (0): -\n");
+        else 
+            System.out.printf("Lixo (%d): %s\n",lixo.obtemNumCartas(),
+                                                lixo.topo().toString());
+
+        //Por Jogador
         for (int i=0;i<numJogadores;++i) {
             System.out.println("------------------------------------------------------------------------");
             System.out.printf("Jogador %s (%d):\n",jogadores[i].obtemNome(),i);
             if (i == jogadorDaVez)
-                System.out.printf("- Mao (%d): %s\n",maoJogador[i].obtemNumCartas(),maoJogador[i].toString() );
+                System.out.printf("- Mao (%d): %s\n",maoJogador[i].obtemNumCartas(),
+                                                     maoJogador[i].toString());
             else
-                System.out.printf("- Mao (%d): ...\n",maoJogador[i].obtemNumCartas() );
-            int nc = monteJogador[i].obtemNumCartas();
-            System.out.printf("- Monte (%d): ",nc);
-            if ( nc == 0 )
-               System.out.println("-");
+                System.out.printf("- Mao (%d): ...\n",maoJogador[i].obtemNumCartas());
+            int nc = mesaJogador[i].obtemNumCartas();
+            System.out.printf("- Mesa (%d): ",nc);
+            if (nc == 0)
+               System.out.printf("-\n");
             else
-               System.out.printf("%s\n",monteJogador[i].topo().toString());
+               System.out.printf("%s\n",mesaJogador[i].toString());
         }
         System.out.println("========================================================================");
     }
-
-    /**
-     * Identifica qual monte de outro jogador pode ser roubado por determinado jogador com determinada carta de sua m&atilde;o.
-     * @param jogador Corresponde ao &iacute;ndice do jogador em quest&atilde;o.
-     * @param c &Iacute;ndice da carta da m&atilde;o do jogador em quest&atilde;o.
-     * @return &Iacute;ndice do primeiro jogador cujo monte pode ser roubado pelo jogador em quest&atilde;o com a carta especificada
-     * ou -1, se n&atilde;o for poss&iacute;vel roubar nenhum monte.
-     */
-    private int qualMontePodeSerRoubado(int jogador, int c) {
-        Carta cartaMao = maoJogador[jogador].posicao(c);
-        for (int j=0; j<numJogadores; ++j) {
-            if (j != jogador) {
-                Carta cartaMonte = monteJogador[j].topo();
-                if (cartaMao!=null && cartaMonte!=null &&
-                    cartaMao.obtemFigura()==cartaMonte.obtemFigura())
-                    return j;
-            }
-        }
-        return -1;
-    }
     
     /**
-     * Realiza o roubo do monte de um jogador, usando determinada carta de um jogador.
-     * @param jogador Corresponde ao &iacute;ndice do jogador que est&aatuce; tentando roubar um monte.
-     * @param c &Iacute;ndice da carta da m&atilde;o do jogador em quest&atilde;o.
-     * @param m &Iacute;ndice do jogador ou monte que se quer roubar com a carta do jogador em quest&atilde;o.
-     * @return <code>true</code> se estiver tudo certo e o roubo for conclu&iaculte;do com sucesso ou <code>false</code>
+     * Realiza compra da carta do topo de um baralho.
+     * @param jogador Corresponde ao &iacute;ndice do jogador que est&aatuce; tentando comprar uma carta.
+     * @param baralho Um objeto da classe Baralho daonde o <code>jogador</code> comparará do topo.
+     * @return <code>true</code> se estiver tudo certo e a compra for conclu&iaculte;do com sucesso ou <code>false</code>
      * se houver algum erro.
      */
-    private boolean roubaMonte(int jogador, int c, int m) {
-        if (c < 0 || c >= maoJogador[jogador].obtemNumCartas())
-            return false;
-        if (m < 0 || m >= numJogadores || jogador == m)
-            return false;
-        Carta cartaMao = maoJogador[jogador].posicao(c);
-        Carta cartaMonte = monteJogador[m].topo();
-        if (cartaMao==null || cartaMonte==null || cartaMao.obtemFigura()!=cartaMonte.obtemFigura())
-            return false;
-        Carta carta;
-        while (monteJogador[m].obtemNumCartas()>0) {
-            carta = monteJogador[m].remove(0);
-            monteJogador[jogador].insere(carta);
-        }
-        carta = maoJogador[jogador].remove(c);
-        monteJogador[jogador].insere(carta);
-        maoJogador[jogador].compra(compras,1);
-        return true;
-    }
-    
-    /**
-     * Identifica qual carta da mesa pode ser roubada por determinado jogador com determinada carta de sua m&atilde;o.
-     * @param jogador Corresponde ao &iacute;ndice do jogador em quest&atilde;o.
-     * @param c &Iacute;ndice da carta da m&atilde;o do jogador em quest&atilde;o.
-     * @return &Iacute;ndice da carta da mesa que pode ser roubada pelo jogador em quest&atilde;o com a carta especificada
-     * ou -1, se n&atilde;o for poss&iacute;vel roubar nenhuma carta.
-     */
-    private int qualCartaMesaPodeSerRoubada(int jogador, int c) {
-        Carta cartaMao = maoJogador[jogador].posicao(c);
-        for (int i=0; i<mesa.obtemNumCartas(); ++i) {
-            Carta cartaMesa = mesa.posicao(i);
-            if (cartaMao!=null && cartaMesa!=null &&
-                cartaMao.obtemFigura()==cartaMesa.obtemFigura())
-                return i;
-        }
-        return -1;
-    }
-    
-    /**
-     * Realiza o roubo de uma carta da mesa, usando determinada carta de um jogador.
-     * @param jogador Corresponde ao &iacute;ndice do jogador que est&aatuce; tentando roubar uma carta da mesa.
-     * @param c &Iacute;ndice da carta da m&atilde;o do jogador em quest&atilde;o.
-     * @param cMesa &Iacute;ndice da carta da mesa que se quer roubar com a carta do jogador em quest&atilde;o.
-     * @return <code>true</code> se estiver tudo certo e o roubo for conclu&iaculte;do com sucesso ou <code>false</code>
-     * se houver algum erro.
-     */
-    private boolean roubaMesa(int jogador, int c, int cMesa) {
-        if (c < 0 || c >= maoJogador[jogador].obtemNumCartas())
-            return false;
-        if (cMesa < 0 || cMesa >= mesa.obtemNumCartas())
-            return false;
-        Carta cartaMao = maoJogador[jogador].posicao(c);
-        Carta cartaMesa = mesa.posicao(cMesa);
-        if (cartaMao==null || cartaMesa==null || cartaMao.obtemFigura()!=cartaMesa.obtemFigura())
-            return false;
-        Carta carta = maoJogador[jogador].remove(c);
-        monteJogador[jogador].insere(carta);
-        carta = mesa.remove(cMesa);
-        monteJogador[jogador].insere(carta);
-        maoJogador[jogador].compra(compras,1);
-        int numCartasMesa = mesa.obtemNumCartas();
-        if (numCartasMesa < 8)
-            mesa.compra(compras,8-numCartasMesa);
+    private boolean compraCarta(int jogador, Baralho baralho) {
+        if (baralho.obtemNumCartas() < 1) return false;
+        Carta cartaTopo = baralho.topo();
+        maoJogador[jogador].insere(cartaTopo);
+        baralho.remove();
         return true;
     }
     
@@ -191,50 +126,57 @@ public class RoubaMonte {
         if (c < 0 || c >= maoJogador[jogador].obtemNumCartas())
             return false;
         Carta carta = maoJogador[jogador].remove(c);
-        mesa.insere(carta);
-        maoJogador[jogador].compra(compras,1);
+        lixo.insere(carta);
         return true;
     }
 
+    //TODO: (cgomesu) implementar jogadas automatizadas via alguma estrategia de jogo
     /**
-     * Realiza a jogada automatizada para determinado jogador, que sempre ser&aacute; do tipo <code>TipoJogador.COMPUTADOR</code>.
-     * Aqui usa-se uma l&oacute;gica relativamente simples: tentar roubar um monte; n&atilde;o sendo poss&iacutel;vel, tenta-se
-     * roubar uma carta da mesa; n&atilde;o sendo poss&iacute;vel, descarta-se uma carta da m&atilde;o.
+     * Implementacao de teste
      * @param jogador Corresponde ao &iacute;ndice do jogador que deve jogar.
      * @return <code>true</code> se estiver tudo certo e a jogada tiver sido conclu&iaculte;da com sucesso ou <code>false</code>
      * se houver algum erro. A princ&iacute;pio este m&eacute;todo sempre retornar&aacute; <code>true</code>, pois o "computador"
      * n&atilde;o tentar&aacute; executar jogadas inv&aacute;lidas.
      */
     private boolean jogadaAutomatica(int jogadorDaVez) {
-        // Avalia cartas do Jogador:
-        // (1) para roubar monte...
-        int cartaParaRoubarMonte = -1;
-        int monteParaRoubar = -1;
-        for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-            int monte = qualMontePodeSerRoubado(jogadorDaVez,cm);
-            if (monte != -1) {
-                cartaParaRoubarMonte = cm;
-                monteParaRoubar = monte;
-                break;
-            }
-        }
-        if (cartaParaRoubarMonte != -1)
-            return roubaMonte(jogadorDaVez,cartaParaRoubarMonte,monteParaRoubar);
-        // (2) para roubar carta da mesa...
-        int cartaParaRoubarMesa = -1;
-        int cartaMesaParaRoubar = -1;
-        for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-            int cartaMesa = qualCartaMesaPodeSerRoubada(jogadorDaVez,cm);
-            if (cartaMesa != -1) {
-                cartaParaRoubarMesa = cm;
-                cartaMesaParaRoubar = cartaMesa;
-                break;
-            }
-        }
-        if (cartaParaRoubarMesa != -1)
-            return roubaMesa(jogadorDaVez,cartaParaRoubarMesa,cartaMesaParaRoubar);
-        // ... ou eh obrigado a descartar!
-        return descarta(jogadorDaVez,0);
+        // // Avalia cartas do Jogador:
+        // // (1) para roubar monte...
+        // int cartaParaRoubarMonte = -1;
+        // int monteParaRoubar = -1;
+        // for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
+        //     int monte = qualMontePodeSerRoubado(jogadorDaVez,cm);
+        //     if (monte != -1) {
+        //         cartaParaRoubarMonte = cm;
+        //         monteParaRoubar = monte;
+        //         break;
+        //     }
+        // }
+        // if (cartaParaRoubarMonte != -1)
+        //     return roubaMonte(jogadorDaVez,cartaParaRoubarMonte,monteParaRoubar);
+        // // (2) para roubar carta da mesa...
+        // int cartaParaRoubarMesa = -1;
+        // int cartaMesaParaRoubar = -1;
+        // for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
+        //     int cartaMesa = qualCartaMesaPodeSerRoubada(jogadorDaVez,cm);
+        //     if (cartaMesa != -1) {
+        //         cartaParaRoubarMesa = cm;
+        //         cartaMesaParaRoubar = cartaMesa;
+        //         break;
+        //     }
+        // }
+        // if (cartaParaRoubarMesa != -1)
+        //     return roubaMesa(jogadorDaVez,cartaParaRoubarMesa,cartaMesaParaRoubar);
+        // // ... ou eh obrigado a descartar!
+        // versao de teste apenas compra mesa ou lixo e descarta aleatorio
+        boolean podeCompras = (compras.obtemNumCartas()>0) ? true : false;
+        boolean podeLixo = (lixo.obtemNumCartas()>0) ? true : false;
+        if (podeCompras)
+            compraCarta(jogadorDaVez,compras);
+        else if (podeLixo)
+            compraCarta(jogadorDaVez,lixo);
+        else
+            return false;
+        return descarta(jogadorDaVez, (int)((maoJogador[jogadorDaVez].obtemNumCartas()-1)*Math.random()));
     }
     
     /**
@@ -249,92 +191,88 @@ public class RoubaMonte {
      */
     private boolean jogadaManual(int jogadorDaVez, Scanner in) {
         // Avalia cartas do Jogador:
-        // (1) para roubar monte...
-        boolean podeRoubarMonte = false;
-        for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-            if (qualMontePodeSerRoubado(jogadorDaVez,cm) != -1) {
-                podeRoubarMonte = true;
-                break;
-            }
-        }
-        // (2) para roubar carta da mesa...
-        boolean podeRoubarCartaMesa = false;
-        for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-            int cartaMesa = qualCartaMesaPodeSerRoubada(jogadorDaVez,cm);
-            if (cartaMesa != -1) {
-                podeRoubarCartaMesa = true;
-                break;
-            }
-        }
-        
-        int selecao1, selecao2, limite;
-        int jogada = 0;
-        
-        boolean respostaOk = false;
-        while (!respostaOk) {
-            if ( podeRoubarMonte )
-                System.out.println("\n1 - ROUBA MONTE");
-            if ( podeRoubarCartaMesa )
-                System.out.println("2 - ROUBA CARTA DA MESA");
-            System.out.println("3 - DESCARTA");
-            System.out.println("4 - SAIR");
+
+        // (1) pode comprar do baralho?
+        boolean podeCompras = (compras.obtemNumCartas()>0) ? true : false;
+
+        // (2) pode comprar do lixo?
+        boolean podeLixo = (lixo.obtemNumCartas()>0) ? true : false;
+
+        boolean respostaValida;
+        do {
+            //opções de menu
+            if (podeCompras) System.out.println("\n1 - COMPRAR DO BARALHO");
+            if (podeLixo) System.out.println("2 - COMPRAR DO LIXO");
+            System.out.println("9 - SAIR");
+            // recebe e valida input do usuario para selecao de inteiro do menu
             System.out.print("JOGADA? ");
-            jogada = in.nextInt();
-            switch (jogada) {
-                case 1: // ROUBA MONTE
-                    if (maoJogador[jogadorDaVez].obtemNumCartas()==1)
-                        selecao1 = 0;
-                    else {
-                        limite = maoJogador[jogadorDaVez].obtemNumCartas()-1;
-                        System.out.printf("Qual carta da sua mao [0;%d]? ", limite);
-                        selecao1 = in.nextInt();
-                    }
-                    if (numJogadores==2)
-                        selecao2 = 1 - jogadorDaVez;
-                    else {
-                        limite = numJogadores-1;
-                        System.out.printf("Monde de qual jogador [0;%d]? ", limite);
-                        selecao2 = in.nextInt();
-                    }
-                    respostaOk = roubaMonte(jogadorDaVez,selecao1,selecao2);
-                    break;
-                case 2: // ROUBA DA MESA
-                    if (maoJogador[jogadorDaVez].obtemNumCartas()==1)
-                        selecao1 = 0;
-                    else {
-                        limite = maoJogador[jogadorDaVez].obtemNumCartas()-1;
-                        System.out.printf("Qual carta da sua mao [0;%d]? ", limite);
-                        selecao1 = in.nextInt();
-                    }
-                    if (mesa.obtemNumCartas()==1)
-                        selecao2 = 0;
-                    else {
-                        limite = mesa.obtemNumCartas()-1;
-                        System.out.printf("Qual carta da mesa [0;%d]? ", limite);
-                        selecao2 = in.nextInt();
-                    }
-                    respostaOk = roubaMesa(jogadorDaVez,selecao1,selecao2);
-                    break;
-                case 3: // DESCARTA
-                    if (maoJogador[jogadorDaVez].obtemNumCartas()==1)
-                        selecao1 = 0;
-                    else {
-                        limite = maoJogador[jogadorDaVez].obtemNumCartas()-1;
-                        System.out.printf("Qual carta da sua mao [0;%d]? ", limite);
-                        selecao1 = in.nextInt();
-                    }
-                    respostaOk = descarta(jogadorDaVez,selecao1);
-                    break;
-                case 4: // SAIR
-                    respostaOk = true;
-                    break;
+            int opcaoMenu;
+            if (in.hasNextInt()) {
+                opcaoMenu = in.nextInt();
+            } else {
+                opcaoMenu = -1;
+                in.next();
+            }
+            switch (opcaoMenu) {
+                case 1:
+                    //compra do baralho
+                    respostaValida = compraCarta(jogadorDaVez,compras); break;
+                case 2:
+                    //compra do lixo
+                    respostaValida = compraCarta(jogadorDaVez,lixo); break;
+                case 9:
+                    //sair
+                    return false;
                 default:
-            } // fim switch (jogada)
-                
-        } // fim while (!respostaOk)
-        
-        if (jogada == 4)
-            return false;
+                    respostaValida = false;
+            }
+        } while (!respostaValida);
+
+        //mostrar nova mão
+        mostraMesa(jogadorDaVez);
+
+        //opcao de bater ou descartar
+        int selecao;
+        do {
+            //novas opções de menu
+            System.out.println("\n1 - BAIXAR JOGO");
+            System.out.println("2 - DESCARTAR");
+            System.out.println("9 - SAIR");
+            // recebe e valida input do usuario para selecao de inteiro do menu
+            System.out.print("JOGADA? ");
+            int opcaoMenu;
+            if (in.hasNextInt()) {
+                opcaoMenu = in.nextInt();
+            } else {
+                opcaoMenu = -1;
+                in.next();
+            }
+            switch (opcaoMenu) {
+                case 1:
+                    //baixar jogo
+                    //TODO: (cgomesu) chamar metodo para baixar jogos
+                    respostaValida = (maoJogador[jogadorDaVez].obtemNumCartas()>0) ? false : true;
+                    break;
+                case 2:
+                    //descarta
+                    if (maoJogador[jogadorDaVez].obtemNumCartas()==1)
+                        selecao = 0;
+                    else {
+                        System.out.printf("Qual carta da sua mao [0;%d]? ", maoJogador[jogadorDaVez].obtemNumCartas()-1);
+                        selecao = in.nextInt();
+                    }
+                    respostaValida = descarta(jogadorDaVez,selecao);
+                    break;
+                case 9:
+                    //sair
+                    return false;
+                default:
+                    respostaValida = false;
+            }
+        } while (!respostaValida);
+
+        //condicao para termino do jogo
+            //return false
         return true;
     }
     
@@ -348,8 +286,7 @@ public class RoubaMonte {
         int jogadorDaVez = 0;
         
         boolean continuar = true;
-        while (continuar) {
-            
+        do {
             mostraMesa(jogadorDaVez);
             
             if (jogadores[jogadorDaVez].obtemTipo() == TipoJogador.COMPUTADOR)
@@ -358,31 +295,19 @@ public class RoubaMonte {
                 continuar = jogadaManual(jogadorDaVez,in);
             
             mostraMesa(jogadorDaVez);
-            for (int i = 0; i<10; ++i)
-                System.out.println();
-                
+
+            for (int i = 0; i<10; ++i) System.out.println();
+            
+            // condicoes de fim de partida
+            if (maoJogador[jogadorDaVez].obtemNumCartas() == 0) {
+                System.out.printf("Vencedor: %s\n", jogadores[jogadorDaVez].obtemNome());
+                continuar = false;
+            }
+
             ++jogadorDaVez;
             if (jogadorDaVez >= numJogadores)
                 jogadorDaVez = 0;
-                
-            if (maoJogador[jogadorDaVez].obtemNumCartas() == 0) {
-                // FIM DO JOGO: determina vencedor
-                int maiorMonte = monteJogador[0].obtemNumCartas();
-                for (int i=1; i<numJogadores; ++i) {
-                    int monte = monteJogador[i].obtemNumCartas();
-                    if (monte > maiorMonte)
-                       maiorMonte = monte;
-                }
-                System.out.println("Vencedor(es):");
-                for (int i=0; i<numJogadores; ++i) {
-                    if (monteJogador[i].obtemNumCartas() == maiorMonte)
-                        System.out.printf("%s (%d)\n", jogadores[i].obtemNome(),maiorMonte);
-                }
-                continuar = false;
-            }
-        
-        } // fim while (!fim)
-        
+        } while (continuar);
         System.out.println("\n---- PARTIDA ENCERRADA ----");
     }
 }
