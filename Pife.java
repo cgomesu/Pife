@@ -12,8 +12,9 @@ public class Pife {
     
     private Baralho compras;
     private Baralho lixo;
-    private Baralho[] mesaJogador;
     private Baralho[] maoJogador;
+    private Baralho[] mesaJogador;
+    private Baralho[] combinacaoJogador;
     private Jogador[] jogadores;
     private int numJogadores;
 
@@ -38,6 +39,7 @@ public class Pife {
         compras = new Baralho(false);
         lixo = new Baralho();
         mesaJogador = new Baralho[numJogadores];
+        combinacaoJogador = new Baralho[numJogadores];
         maoJogador = new Baralho[numJogadores];
         
         compras.embaralha();
@@ -45,6 +47,7 @@ public class Pife {
         for (int i=0;i<numJogadores;++i) {
             maoJogador[i] = new Baralho();
             mesaJogador[i] = new Baralho();
+            combinacaoJogador[i] = new Baralho();
         }
 
         // Distribuicao inicial de cartas na mao de cada jogador
@@ -70,8 +73,7 @@ public class Pife {
         if (numCartasCompras == 0)
             System.out.printf("Compras (0): -\n");
         else 
-            System.out.printf("Compras (%d): %s\n",compras.obtemNumCartas(),
-                                                   compras.topo().toString());
+            System.out.printf("Compras (%d): ?\n",compras.obtemNumCartas());
 
         //Lixo
         int numCartasLixo = lixo.obtemNumCartas();
@@ -86,20 +88,54 @@ public class Pife {
             System.out.println("------------------------------------------------------------------------");
             System.out.printf("Jogador %s (%d):\n",jogadores[i].obtemNome(),i);
             if (i == jogadorDaVez)
-                System.out.printf("- Mao (%d): %s\n",maoJogador[i].obtemNumCartas(),
-                                                     maoJogador[i].toString());
+                mostraMao(i, false);
             else
-                System.out.printf("- Mao (%d): ...\n",maoJogador[i].obtemNumCartas());
-            int nc = mesaJogador[i].obtemNumCartas();
-            System.out.printf("- Mesa (%d): ",nc);
-            if (nc == 0)
-               System.out.printf("-\n");
-            else
-               System.out.printf("%s\n",mesaJogador[i].toString());
+                mostraMao(i, true);
         }
         System.out.println("========================================================================");
     }
-    
+
+    /**
+     * Mostra a mao de um jogador.
+     * @param jogador
+     */
+    public void mostraMao(int jogador) {
+        //TODO: (cgomesu) adicionar lista do indice abaixo de toString para ajudar usuario
+        System.out.printf("- Mao (%d): %s\n",
+                          maoJogador[jogador].obtemNumCartas(),
+                          maoJogador[jogador].toString());
+    }
+    /**
+     * Mostra a mao de um jogador.
+     * @param jogador Numero do jogador.
+     * @param ocultaCartas <code>true</code> indica que as cartas nao devem ser apresentadas
+     * com face virada para cima.
+     */
+    public void mostraMao(int jogador, boolean ocultaCartas) {
+        if (ocultaCartas) System.out.printf("- Mao (%d): ...\n", maoJogador[jogador].obtemNumCartas());
+        else mostraMao(jogador);
+    }
+
+    /**
+     * Mostra a mesa de um jogador.
+     * @param jogador Numero do jogador.
+     */
+    public void mostraMesaJogador(int jogador) {
+        System.out.printf("- Mesa Jogador (%d): %s\n",
+                          mesaJogador[jogador].obtemNumCartas(),
+                          mesaJogador[jogador].toString());
+    }
+
+    /**
+     * Mostra a combinacao de um jogador.
+     * @param jogador Numero do jogador.
+     */
+    public void mostraCombinacao(int jogador) {
+        System.out.printf("- Combinação (%d): %s\n",
+                          combinacaoJogador[jogador].obtemNumCartas(),
+                          combinacaoJogador[jogador].toString());
+    }
+
     /**
      * Realiza compra da carta do topo de um baralho.
      * @param jogador Corresponde ao &iacute;ndice do jogador que est&aatuce; tentando comprar uma carta.
@@ -127,6 +163,83 @@ public class Pife {
             return false;
         Carta carta = maoJogador[jogador].remove(c);
         lixo.insere(carta);
+        return true;
+    }
+
+    /**
+     * Move todas as cartas de um baralho para outro.
+     * @param origem Baralho de origem, ou seja, daonde as cartas sairão.
+     * @param destino Baralho de destino, ou seja, daonde as cartas entrarão.
+     * @return <code>true</code> se foi possivel mover todas cartas do baralho de origem para o destino.
+     */
+    public boolean moveBaralho(Baralho origem, Baralho destino) {
+        if (origem.obtemNumCartas()<1)
+            return false;
+        while (origem.obtemNumCartas()>0) {
+            Carta c = origem.remove();
+            destino.insere(c);
+        }
+        return true;
+    }
+
+    /**
+     * Baixa uma combinacao valida para mesa
+     * @param jogadorDaVez
+     * @return
+     */
+    public boolean baixarCombinacao(int jogador, boolean trinca, Scanner in) {
+        if (maoJogador[jogador].obtemNumCartas()<3)
+            return false;
+        boolean combinacaoValida = false;
+        do {
+            int selecao;
+            int limite = maoJogador[jogador].obtemNumCartas()-1;
+            mostraMao(jogador);
+            if (combinacaoJogador[jogador].obtemNumCartas()>0)
+                mostraCombinacao(jogador);
+            System.out.printf("\nQual carta da sua mao [0;%d]? (negativo para finalizar) ", limite);
+            if (in.hasNextInt()) {
+                selecao = in.nextInt();
+            } else {
+                in.next();
+                continue;
+            }
+            //valida selecao
+            if (selecao >= 0 && selecao <= limite) {
+                //selecao valida indicando carta
+                Carta c = maoJogador[jogador].remove(selecao);
+                if (combinacaoJogador[jogador].obtemNumCartas()==0) {
+                    combinacaoJogador[jogador].insere(c);
+                } else if (trinca) {
+                    // segue definicao trinca?
+                    if (c.obtemFigura()==combinacaoJogador[jogador].topo().obtemFigura()) {
+                        combinacaoJogador[jogador].insere(c);
+                    } else {
+                        //devolve carta para mao
+                        maoJogador[jogador].insere(c);
+                    }
+                } else {
+                    // segue sequencia?
+                    // loop cartas na combinacaoJogador para ver se segue definicao de sequencia
+                }
+            } else if (selecao < 0) {
+                // selecao valida indicando terminacao
+                //baixar combinacao para mesa se valida; devolver cartas para mao caso contrario.
+                if (combinacaoJogador[jogador].obtemNumCartas()>=3) {
+                    moveBaralho(combinacaoJogador[jogador], mesaJogador[jogador]);
+                    //mostra combinação baixada
+                    mostraMesa(jogador);
+                    combinacaoValida = true;
+                } else {
+                    moveBaralho(combinacaoJogador[jogador], maoJogador[jogador]);
+                    mostraMao(jogador);
+                    return false;
+                }
+            } else {
+                // selecao invalida
+                combinacaoValida = false;
+            }
+        } while (!combinacaoValida && maoJogador[jogador].obtemNumCartas()>0);
         return true;
     }
 
@@ -190,21 +303,17 @@ public class Pife {
      * tenha selecionado a op&ccedil;&atilde;o para encerrar o jogo.
      */
     private boolean jogadaManual(int jogadorDaVez, Scanner in) {
-        // Avalia cartas do Jogador:
-
         // (1) pode comprar do baralho?
         boolean podeCompras = (compras.obtemNumCartas()>0) ? true : false;
-
         // (2) pode comprar do lixo?
         boolean podeLixo = (lixo.obtemNumCartas()>0) ? true : false;
 
-        boolean respostaValida;
+        boolean menuCompraValida = false;
         do {
-            //opções de menu
+            //opções de menu compra
             if (podeCompras) System.out.println("\n1 - COMPRAR DO BARALHO");
             if (podeLixo) System.out.println("2 - COMPRAR DO LIXO");
             System.out.println("9 - SAIR");
-            // recebe e valida input do usuario para selecao de inteiro do menu
             System.out.print("JOGADA? ");
             int opcaoMenu;
             if (in.hasNextInt()) {
@@ -216,26 +325,27 @@ public class Pife {
             switch (opcaoMenu) {
                 case 1:
                     //compra do baralho
-                    respostaValida = compraCarta(jogadorDaVez,compras); break;
+                    menuCompraValida = compraCarta(jogadorDaVez,compras); break;
                 case 2:
                     //compra do lixo
-                    respostaValida = compraCarta(jogadorDaVez,lixo); break;
+                    menuCompraValida = compraCarta(jogadorDaVez,lixo); break;
                 case 9:
                     //sair
                     return false;
                 default:
-                    respostaValida = false;
+                    menuCompraValida = false;
             }
-        } while (!respostaValida);
+        } while (!menuCompraValida);
 
         //mostrar nova mão
-        mostraMesa(jogadorDaVez);
+        System.out.println("\nPós-compra:");
+        mostraMao(jogadorDaVez);
 
         //opcao de bater ou descartar
-        int selecao;
+        boolean menuPrincipalValido = false;
         do {
             //novas opções de menu
-            System.out.println("\n1 - BAIXAR JOGO");
+            System.out.println("\n1 - BATER");
             System.out.println("2 - DESCARTAR");
             System.out.println("9 - SAIR");
             // recebe e valida input do usuario para selecao de inteiro do menu
@@ -249,30 +359,69 @@ public class Pife {
             }
             switch (opcaoMenu) {
                 case 1:
-                    //baixar jogo
-                    //TODO: (cgomesu) chamar metodo para baixar jogos
-                    respostaValida = (maoJogador[jogadorDaVez].obtemNumCartas()>0) ? false : true;
+                    //bater jogo
+                    boolean menuBaterValido = false;
+                    do {
+                        System.out.println("\nQual o tipo de combinação?");
+                        System.out.println("1 - TRINCA");
+                        System.out.println("2 - SEQUENCIA");
+                        System.out.println("3 - DESISTIR DE BATER");
+                        System.out.print("JOGADA? ");
+                        int opcaoBater;
+                        if (in.hasNextInt()) {
+                            opcaoBater = in.nextInt();
+                        } else {
+                            opcaoBater = -1;
+                            in.next();
+                        }
+                        switch (opcaoBater) {
+                            case 1:
+                                baixarCombinacao(jogadorDaVez, true, in);
+                                menuBaterValido = (maoJogador[jogadorDaVez].obtemNumCartas()>1) ? false : true;
+                                //trinca
+                                break;
+                            case 2:
+                                //sequencia
+                                //TODO: (cgomesu) implementar sequencias
+                                // baixarCombinacao(jogadorDaVez, false, in);
+                                menuBaterValido = (maoJogador[jogadorDaVez].obtemNumCartas()>1) ? false : true;
+                                break;
+                            case 3:
+                                //desistir
+                                menuBaterValido = (mesaJogador[jogadorDaVez].obtemNumCartas()>0)
+                                                   ? moveBaralho(mesaJogador[jogadorDaVez], 
+                                                                 maoJogador[jogadorDaVez])
+                                                   : true;
+                                break;
+                            default:
+                                menuBaterValido = false;
+                        }
+                    } while (!menuBaterValido);
+                    //valido apenas se for pular descarte
+                    menuPrincipalValido = (maoJogador[jogadorDaVez].obtemNumCartas()==0);
                     break;
                 case 2:
                     //descarta
+                    int selecao;
                     if (maoJogador[jogadorDaVez].obtemNumCartas()==1)
                         selecao = 0;
                     else {
-                        System.out.printf("Qual carta da sua mao [0;%d]? ", maoJogador[jogadorDaVez].obtemNumCartas()-1);
+                        System.out.println("\nPós-compra:");
+                        mostraMao(jogadorDaVez);
+                        System.out.printf("Qual carta da sua mao [0;%d]? ",
+                                          maoJogador[jogadorDaVez].obtemNumCartas()-1);
                         selecao = in.nextInt();
                     }
-                    respostaValida = descarta(jogadorDaVez,selecao);
+                    menuPrincipalValido = descarta(jogadorDaVez,selecao);
                     break;
                 case 9:
                     //sair
                     return false;
                 default:
-                    respostaValida = false;
+                    menuPrincipalValido = false;
             }
-        } while (!respostaValida);
+        } while (!menuPrincipalValido);
 
-        //condicao para termino do jogo
-            //return false
         return true;
     }
     
@@ -296,11 +445,13 @@ public class Pife {
             
             mostraMesa(jogadorDaVez);
 
-            for (int i = 0; i<10; ++i) System.out.println();
+            // espaçamento entre mesas
+            for (int i = 0; i<40; ++i) System.out.println();
             
             // condicoes de fim de partida
             if (maoJogador[jogadorDaVez].obtemNumCartas() == 0) {
                 System.out.printf("Vencedor: %s\n", jogadores[jogadorDaVez].obtemNome());
+                mostraMesa(jogadorDaVez);
                 continuar = false;
             }
 
@@ -308,6 +459,7 @@ public class Pife {
             if (jogadorDaVez >= numJogadores)
                 jogadorDaVez = 0;
         } while (continuar);
+
         System.out.println("\n---- PARTIDA ENCERRADA ----");
     }
 }
