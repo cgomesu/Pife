@@ -1,6 +1,28 @@
 # Pife
 Este projeto é um fork de [RoubaMonte](https://github.com/RolandTeodorowitsch/RoubaMonte) adaptado para o jogo de [Pife (pif-paf)](https://pt.wikipedia.org/wiki/Pife_(jogo_de_cartas)).
 
+## Instalação e uso
+
+1. Clonar o projeto localmente no dir `Downloads` do usuário atual:
+
+```
+cd ~/Downloads/
+git clone https://github.com/cgomesu/Pife.git
+```
+
+2. Compilar arquivos `.java`:
+
+```
+cd ~/Downloads/Pife/
+javac ./*.java
+```
+
+3. Para iniciar o jogo:
+
+```
+java Main
+```
+
 ## Regras
 O objetivo do jogador de Pife é formar combinações com as cartas que receber ou comprar.
 
