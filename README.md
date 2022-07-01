@@ -30,6 +30,7 @@ Ganha a partida o primeiro jogador que conseguir montar combinações com todas 
 Combinações precisam ser compostas por **três ou mais cartas** e podem ser de dois tipos:
 - **Trincas**: cartas de mesmo valor e naipes diferentes;
 - **Sequências**: cartas de valor diferente e de mesmo naipe.
+  - Não é preciso baixar sequências em ordem, porém para cada seleção, é necessário que a carta selecionada seja a próxima ou anterior a uma carta qualquer que já esteja na combinação.
 
 ### Bater
 Um jogador só pode bater durante o seu turno, que começa com a compra de uma carta e termina com o descarte de uma carta da mão.
