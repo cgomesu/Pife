@@ -188,6 +188,7 @@ public class Pife {
      * @return
      */
     public boolean baixarCombinacao(int jogador, boolean trinca, Scanner in) {
+        //mao precisa ter ao menos 3 cartas para formar uma combinacao valida
         if (maoJogador[jogador].obtemNumCartas()<3)
             return false;
         boolean combinacaoValida = false;
@@ -219,8 +220,21 @@ public class Pife {
                         maoJogador[jogador].insere(c);
                     }
                 } else {
-                    // segue sequencia?
-                    // loop cartas na combinacaoJogador para ver se segue definicao de sequencia
+                    // segue sequencia? primeiro ver naipe, entao valores possiveis
+                    boolean achouSequencia = false;
+                    if (c.obtemNaipe()==combinacaoJogador[jogador].topo().obtemNaipe()) {
+                        // loop se selecao e de um valor possivel com o que existe na combinacao atual
+                        for (int i=0; i<combinacaoJogador[jogador].obtemNumCartas(); ++i) {
+                            if (c.obtemValor()==combinacaoJogador[jogador].posicao(i).obtemValor()+1
+                                || c.obtemValor()==combinacaoJogador[jogador].posicao(i).obtemValor()-1) {
+                                    //carta selecionada é válida
+                                    combinacaoJogador[jogador].insere(c);
+                                    achouSequencia = true;
+                            }
+                        }
+                    }
+                    if (!achouSequencia)
+                        maoJogador[jogador].insere(c);
                 }
             } else if (selecao < 0) {
                 // selecao valida indicando terminacao
@@ -382,8 +396,7 @@ public class Pife {
                                 break;
                             case 2:
                                 //sequencia
-                                //TODO: (cgomesu) implementar sequencias
-                                // baixarCombinacao(jogadorDaVez, false, in);
+                                baixarCombinacao(jogadorDaVez, false, in);
                                 menuBaterValido = (maoJogador[jogadorDaVez].obtemNumCartas()>1) ? false : true;
                                 break;
                             case 3:
@@ -392,6 +405,7 @@ public class Pife {
                                                    ? moveBaralho(mesaJogador[jogadorDaVez], 
                                                                  maoJogador[jogadorDaVez])
                                                    : true;
+                                mostraMao(jogadorDaVez);
                                 break;
                             default:
                                 menuBaterValido = false;
