@@ -6,7 +6,7 @@ import java.util.Scanner;
  * As regras usadas na implementa&ccedil;&atilde;o s&atilde;o basicamente 
  * 
  * @author cgomesu
- * @version 23 jun 2019
+ * @version 01 jul 2022
  */
 public class Pife {
     
@@ -71,9 +71,9 @@ public class Pife {
         //Compras
         int numCartasCompras = compras.obtemNumCartas();
         if (numCartasCompras == 0)
-            System.out.printf("Compras (0): -\n");
+            System.out.printf("Baralho (0): -\n");
         else 
-            System.out.printf("Compras (%d): ?\n",compras.obtemNumCartas());
+            System.out.printf("Baralho (%d): ?\n",compras.obtemNumCartas());
 
         //Lixo
         int numCartasLixo = lixo.obtemNumCartas();
@@ -100,7 +100,6 @@ public class Pife {
      * @param jogador
      */
     public void mostraMao(int jogador) {
-        //TODO: (cgomesu) adicionar lista do indice abaixo de toString para ajudar usuario
         System.out.printf("- Mao (%d): %s\n",
                           maoJogador[jogador].obtemNumCartas(),
                           maoJogador[jogador].toString());
@@ -259,42 +258,14 @@ public class Pife {
 
     //TODO: (cgomesu) implementar jogadas automatizadas via alguma estrategia de jogo
     /**
-     * Implementacao de teste
+     * Implementacao de teste de jogada automatizada em que computador apenas compra mesa ou lixo e entao
+     * descarta uma carta aleatoria.
      * @param jogador Corresponde ao &iacute;ndice do jogador que deve jogar.
      * @return <code>true</code> se estiver tudo certo e a jogada tiver sido conclu&iaculte;da com sucesso ou <code>false</code>
      * se houver algum erro. A princ&iacute;pio este m&eacute;todo sempre retornar&aacute; <code>true</code>, pois o "computador"
      * n&atilde;o tentar&aacute; executar jogadas inv&aacute;lidas.
      */
     private boolean jogadaAutomatica(int jogadorDaVez) {
-        // // Avalia cartas do Jogador:
-        // // (1) para roubar monte...
-        // int cartaParaRoubarMonte = -1;
-        // int monteParaRoubar = -1;
-        // for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-        //     int monte = qualMontePodeSerRoubado(jogadorDaVez,cm);
-        //     if (monte != -1) {
-        //         cartaParaRoubarMonte = cm;
-        //         monteParaRoubar = monte;
-        //         break;
-        //     }
-        // }
-        // if (cartaParaRoubarMonte != -1)
-        //     return roubaMonte(jogadorDaVez,cartaParaRoubarMonte,monteParaRoubar);
-        // // (2) para roubar carta da mesa...
-        // int cartaParaRoubarMesa = -1;
-        // int cartaMesaParaRoubar = -1;
-        // for (int cm=0; cm<maoJogador[jogadorDaVez].obtemNumCartas(); ++cm) {
-        //     int cartaMesa = qualCartaMesaPodeSerRoubada(jogadorDaVez,cm);
-        //     if (cartaMesa != -1) {
-        //         cartaParaRoubarMesa = cm;
-        //         cartaMesaParaRoubar = cartaMesa;
-        //         break;
-        //     }
-        // }
-        // if (cartaParaRoubarMesa != -1)
-        //     return roubaMesa(jogadorDaVez,cartaParaRoubarMesa,cartaMesaParaRoubar);
-        // // ... ou eh obrigado a descartar!
-        // versao de teste apenas compra mesa ou lixo e descarta aleatorio
         boolean podeCompras = (compras.obtemNumCartas()>0) ? true : false;
         boolean podeLixo = (lixo.obtemNumCartas()>0) ? true : false;
         if (podeCompras)
@@ -465,7 +436,7 @@ public class Pife {
             // condicoes de fim de partida
             if (maoJogador[jogadorDaVez].obtemNumCartas() == 0) {
                 System.out.printf("Vencedor: %s\n", jogadores[jogadorDaVez].obtemNome());
-                mostraMesa(jogadorDaVez);
+                mostraMesaJogador(jogadorDaVez);
                 continuar = false;
             }
 
